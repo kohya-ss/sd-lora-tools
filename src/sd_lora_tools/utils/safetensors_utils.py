@@ -92,7 +92,7 @@ class MemoryEfficientSafeOpen:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.file.close()
 
-    def keys(self):
+    def keys(self) -> list[str]:
         return [k for k in self.header.keys() if k != "__metadata__"]
 
     def metadata(self) -> Dict[str, str]:
