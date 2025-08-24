@@ -63,10 +63,10 @@ def compare_metadatas(file1, file2, metadata1, metadata2):
 def compare_weights(file1, file2, rtol, atol, compare_metadata):
     """Compare two weight files and report differences."""
     logger.info(f"Loading first model: {file1}")
-    sd1, metadata1 = load_state_dict(file1, torch.float32)
+    sd1, metadata1 = load_state_dict(file1, None)
 
     logger.info(f"Loading second model: {file2}")
-    sd2, metadata2 = load_state_dict(file2, torch.float32)
+    sd2, metadata2 = load_state_dict(file2, None)
 
     # Compare metadata
     if compare_metadata:
@@ -107,8 +107,8 @@ def compare_weights(file1, file2, rtol, atol, compare_metadata):
         matched_count = 0
 
         for key in sorted(common_keys):
-            tensor1 = sd1[key]
-            tensor2 = sd2[key]
+            tensor1 = sd1[key].to(dtype=torch.float32)
+            tensor2 = sd2[key].to(dtype=torch.float32)
 
             # Check if shapes match
             if tensor1.shape != tensor2.shape:
