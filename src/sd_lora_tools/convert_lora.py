@@ -359,12 +359,12 @@ def convert(args: argparse.Namespace) -> None:
 
     if args.target == "diffusers":
         # Detect TE prefixes from sd-scripts keys
-        if args.sd_scripts_te_prefix is not None:
+        if args.sd_scripts_te_prefix is not None and len(args.sd_scripts_te_prefix) > 0:
             sd_scripts_te_prefixes = args.sd_scripts_te_prefix
         else:
             sd_scripts_te_prefixes = detect_sd_scripts_te_prefixes(state_dict)
 
-        if args.diffusers_te_prefix is not None:
+        if args.diffusers_te_prefix is not None and len(args.diffusers_te_prefix) > 0:
             diffusers_te_prefixes = args.diffusers_te_prefix
         else:
             diffusers_te_prefixes = get_default_diffusers_te_prefixes(len(sd_scripts_te_prefixes))
@@ -391,12 +391,12 @@ def convert(args: argparse.Namespace) -> None:
     else:
         # target == "sd_scripts"
         # Detect TE prefixes from Diffusers keys
-        if args.diffusers_te_prefix is not None:
+        if args.diffusers_te_prefix is not None and len(args.diffusers_te_prefix) > 0:
             diffusers_te_prefixes = args.diffusers_te_prefix
         else:
             diffusers_te_prefixes = detect_diffusers_te_prefixes(state_dict)
 
-        if args.sd_scripts_te_prefix is not None:
+        if args.sd_scripts_te_prefix is not None and len(args.sd_scripts_te_prefix) > 0:
             sd_scripts_te_prefixes = args.sd_scripts_te_prefix
         else:
             sd_scripts_te_prefixes = get_default_sd_scripts_te_prefixes(len(diffusers_te_prefixes))
