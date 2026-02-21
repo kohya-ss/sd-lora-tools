@@ -12,6 +12,10 @@ This project provides a set of tools for managing, loading, and saving LoRA mode
 
 ⚠️ **This project is currently under active development.** APIs and functionality may change without notice.
 
+## Documentation
+
+For detailed usage instructions, please refer to the [Documentation Index](docs/index.md).
+
 ## Features
 
 - LoRA model loading and saving utilities
