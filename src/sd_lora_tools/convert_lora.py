@@ -132,12 +132,10 @@ def detect_diffusers_te_prefixes(state_dict: dict[str, torch.Tensor]) -> list[st
     """
     prefixes: list[str] = []
     # Check numbered TEs (text_encoder_2., text_encoder_3., ...)
-    has_numbered = False
     for i in range(2, 10):
         prefix = f"text_encoder_{i}."
         if any(k.startswith(prefix) for k in state_dict):
             prefixes.append(prefix)
-            has_numbered = True
     # Check base TE
     if any(k.startswith("text_encoder.") for k in state_dict):
         prefixes.insert(0, "text_encoder.")
