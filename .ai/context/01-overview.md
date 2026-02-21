@@ -1,6 +1,6 @@
 # SD LoRA Tools - Project Context
 
-This repository is a collection of utilities for LoRA (Low-Rank Adaptation) models, maintained by the same team as `sd-scripts`. It focuses on processing LoRA weights for Stable Diffusion and other image generation models.
+This repository is a collection of utilities for LoRA (Low-Rank Adaptation) models, maintained by the same team as `sd-scripts` and Musubi Tuner. It focuses on processing LoRA weights for Stable Diffusion and other image generation models.
 
 ## Core Scripts (`src/sd_lora_tools/`)
 
