@@ -7,6 +7,7 @@ This repository provides various utilities for LoRA (Low-Rank Adaptation) models
 - [LoRA Extraction](extract_lora.md) - Extract a LoRA model from the difference between two full models.
 - [LoRA Merging](merging.md) - Tools for merging multiple LoRA models or merging LoRA into a base model.
 - [LoRA Resizing](resize.md) - Resize a LoRA model to a different rank (dimension).
+- [LoRA Format Conversion](convert_lora.md) - Convert LoRA between sd-scripts and Diffusers formats.
 - [Utilities](utilities.md) - Small tools for checking weights, metadata, and comparing models.
 
 ## Installation
@@ -28,6 +29,7 @@ pip install -r requirements.txt
 - [LoRAの抽出](extract_lora.md) - 2つのフルモデルの差分からLoRAモデルを抽出します。
 - [LoRAのマージ](merging.md) - 複数のLoRAモデルのマージ、またはLoRAをベースモデルにマージするためのツール。
 - [LoRAのリサイズ](resize.md) - LoRAモデルを異なるランク（次元数）にリサイズします。
+- [LoRAフォーマット変換](convert_lora.md) - sd-scripts形式とDiffusers形式の間でLoRAを変換します。
 - [ユーティリティ](utilities.md) - 重みの確認、メタデータの表示、モデルの比較を行うためのツール群。
 
 ## インストール
