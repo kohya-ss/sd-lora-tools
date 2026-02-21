@@ -12,6 +12,7 @@ GEMINI.md
 .claude/
 .gemini/
 *egg-info/
+references/
 
 # Ignore Python bytecode files
 *.pyc
