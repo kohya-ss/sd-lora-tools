@@ -37,6 +37,7 @@ REFERENCE_MODEL_PREFIXES_TO_STRIP = [
     "model.",
     "text_model.encoder.",
     "text_model.",
+    "net.",  # Anima-preview
     "",  # fallback: no prefix
 ]
 
