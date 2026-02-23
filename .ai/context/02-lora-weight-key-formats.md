@@ -39,7 +39,7 @@ In other words, a LoRA key name is constructed as: **prefix + base + suffix**.
 
   * `.lora_up.weight`
   * `.lora_down.weight`
-  * `.alpha`
+  * `.alpha` : sd-scripts / Musubi Tuner should support alpha values, very few LoRA weight files don’t include them. If the alpha value is missing, it can be set to the same value as the rank.
 
 So, if the U-Net (DiT) base model key is `blocks.0.self_attn.to_q.weight`, the LoRA keys become:
 
@@ -69,7 +69,7 @@ Note: The main goal of this repository is to support the sd-scripts / Musubi Tun
 
   * `.lora_A.weight`
   * `.lora_B.weight`
-  * `.alpha`
+  * `.alpha` : Diffusers does not support alpha values, but some trainers that use Diffusers-style keys include them. If the alpha value is missing, it can be set to the same value as the rank.
 
 So, if the U-Net (DiT) base model key is `blocks.0.self_attn.to_q.weight`, the LoRA keys may look like:
 
