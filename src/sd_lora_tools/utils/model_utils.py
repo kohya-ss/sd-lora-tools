@@ -20,6 +20,17 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Known prefixes in reference model files that should be stripped to get the base module name
+REFERENCE_MODEL_PREFIXES_TO_STRIP = [
+    "model.diffusion_model.",
+    "diffusion_model.",
+    "model.",
+    "text_model.encoder.",
+    "text_model.",
+    "net.",  # Anima-preview
+    "",  # fallback: no prefix
+]
+
 
 def dtype_to_str(dtype: torch.dtype) -> str:
     # get name of the dtype
