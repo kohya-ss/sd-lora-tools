@@ -11,7 +11,7 @@ from tqdm import tqdm
 try:
     from .utils.safetensors_utils import MemoryEfficientSafeOpen, mem_eff_save_file
     from .utils.common import setup_logging, add_logging_arguments
-    from .utils.model_utils import str_to_dtype
+    from .utils.model_utils import str_to_dtype, build_lora_to_model_mapping
 except ImportError:
     # If not installed as a package
     import os
@@ -19,14 +19,12 @@ except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from sd_lora_tools.utils.safetensors_utils import MemoryEfficientSafeOpen, mem_eff_save_file  # type: ignore
     from sd_lora_tools.utils.common import setup_logging, add_logging_arguments  # type: ignore
-    from sd_lora_tools.utils.model_utils import str_to_dtype  # type: ignore
+    from sd_lora_tools.utils.model_utils import str_to_dtype, build_lora_to_model_mapping  # type: ignore
 
 setup_logging()
 import logging
 
 logger = logging.getLogger(__name__)
-
-import torch
 
 
 def merge_single_lora_weight(
@@ -57,37 +55,33 @@ def merge_lora_weights(
     key: str,
     base_weight: torch.Tensor,
     lora_f_list: list[MemoryEfficientSafeOpen],
-    lora_keys_list: list[list[str]],
+    lora_keys_list: list[set[str]],
+    lora_mappings: list[dict[str, str]],  # model_key -> lora_module_name
+    lora_formats: list[str],  # "sd_scripts" or "diffusers"
     ratios: list[float],
     re_scales: Optional[list[tuple[re.Pattern, float]]],
     merge_dtype: torch.dtype,
 ) -> tuple[list[bool], torch.Tensor]:
     if not key.endswith(".weight"):
         return [False] * len(lora_f_list), base_weight
-    
-    # Remove annoying prefix from the base model key
-    if key.startswith("model."):
-        key = key[len("model.") :]
-    if key.startswith("diffusion_model."):
-        key = key[len("diffusion_model.") :]
-    if key.startswith("text_encoder."):
-        key = key[len("text_encoder.") :]
 
-    # Create a list of all possible LoRA prefixes
-    prefixes = ["lora_unet_", "lora_te_", "lora_te1_", "lora_te2_", "lora_te3_"]
-
-    lora_name_without_prefix = key[: -len(".weight")].replace(".", "_")  # e.g. "down_blocks_0_attentions_0_to_k_proj"
     success_list = []
-    for lora_f, lora_keys, ratio in zip(lora_f_list, lora_keys_list, ratios):
+    for lora_f, lora_keys, lora_mapping, fmt, ratio in zip(lora_f_list, lora_keys_list, lora_mappings, lora_formats, ratios):
         success = False
-        for prefix in prefixes:
-            lora_module_name = prefix + lora_name_without_prefix
-            lora_key = lora_module_name + ".lora_down.weight"
+        if key in lora_mapping:
+            lora_module_name = lora_mapping[key]
 
-            if lora_key in lora_keys:
-                # merge weights
-                lora_down = lora_f.get_tensor(lora_key).to(dtype=merge_dtype)
-                lora_up = lora_f.get_tensor(lora_key.replace("lora_down", "lora_up")).to(dtype=merge_dtype)
+            if fmt == "sd_scripts":
+                down_suffix, up_suffix = ".lora_down.weight", ".lora_up.weight"
+            else:
+                down_suffix, up_suffix = ".lora_A.weight", ".lora_B.weight"
+
+            lora_down_key = lora_module_name + down_suffix
+            lora_up_key = lora_module_name + up_suffix
+
+            if lora_down_key in lora_keys:
+                lora_down = lora_f.get_tensor(lora_down_key).to(dtype=merge_dtype)
+                lora_up = lora_f.get_tensor(lora_up_key).to(dtype=merge_dtype)
                 alpha_key = lora_module_name + ".alpha"
 
                 if alpha_key in lora_keys:
@@ -110,9 +104,7 @@ def merge_lora_weights(
 
                 logger.debug(f"merged {lora_module_name} with alpha {alpha} and ratio {ratio}")
                 success = True
-                break  # break prefix loop
 
-        # end of prefix loop, process next lora
         success_list.append(success)
 
     return success_list, base_weight
@@ -151,12 +143,20 @@ def merge(args):
     # enumerate keys for all models
     logger.info("Checking model keys...")
     base_model_keys, base_model_metadata = load_model_keys_and_metadata(args.base_model)
-    lora_keys_list = [load_model_keys_and_metadata(model)[0] for model in args.models]
+    lora_keys_list_raw = [load_model_keys_and_metadata(model)[0] for model in args.models]
+    lora_keys_list: list[set[str]] = [set(keys) for keys in lora_keys_list_raw]
 
-    # count modules for each LoRA
+    # build mappings for each LoRA (auto-detect format and prefix)
+    lora_formats: list[str] = []
+    lora_mappings: list[dict[str, str]] = []  # model_key -> lora_module_name
     module_count = [0] * len(args.models)
-    for i, lora_keys in enumerate(lora_keys_list):
-        module_count[i] = len([k for k in lora_keys if k.endswith("lora_down.weight")])
+    for i, lora_keys_raw in enumerate(lora_keys_list_raw):
+        mapping, fmt = build_lora_to_model_mapping(lora_keys_raw, base_model_keys)
+        inverted = {v: k for k, v in mapping.items()}  # model_key -> lora_module_name
+        lora_mappings.append(inverted)
+        lora_formats.append(fmt)
+        module_count[i] = len(mapping)
+        logger.info(f"LoRA {i}: format={fmt}, matched modules={len(mapping)}")
 
     # on the fly merging
     merged_sd = {}
@@ -165,7 +165,9 @@ def merge(args):
         lora_f_list = [MemoryEfficientSafeOpen(model) for model in args.models]
         for key in tqdm(base_model_keys):
             value = base_f.get_tensor(key).to(dtype=merge_dtype)
-            success_list, value = merge_lora_weights(key, value, lora_f_list, lora_keys_list, args.ratios, re_scales, merge_dtype)  # type: ignore
+            success_list, value = merge_lora_weights(
+                key, value, lora_f_list, lora_keys_list, lora_mappings, lora_formats, args.ratios, re_scales, merge_dtype
+            )
             merged_sd[key] = value.to(device="cpu", dtype=save_dtype)
 
             # decrement module count if successful
