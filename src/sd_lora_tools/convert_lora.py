@@ -11,7 +11,7 @@ from safetensors.torch import save_file
 try:
     from .utils.common import setup_logging, add_logging_arguments
     from .utils import safetensors_utils, metadata_utils
-    from .utils.model_utils import str_to_dtype
+    from .utils.model_utils import str_to_dtype, REFERENCE_MODEL_PREFIXES_TO_STRIP
 except ImportError:
     # If not installed as a package
     import os
@@ -19,7 +19,7 @@ except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from sd_lora_tools.utils.common import setup_logging, add_logging_arguments  # type: ignore
     from sd_lora_tools.utils import safetensors_utils, metadata_utils  # type: ignore
-    from sd_lora_tools.utils.model_utils import str_to_dtype  # type: ignore
+    from sd_lora_tools.utils.model_utils import str_to_dtype, REFERENCE_MODEL_PREFIXES_TO_STRIP  # type: ignore
 
 setup_logging()
 import logging
@@ -29,17 +29,6 @@ logger = logging.getLogger(__name__)
 # Default prefixes
 DEFAULT_SD_SCRIPTS_UNET_PREFIX = "lora_unet_"
 DEFAULT_DIFFUSERS_UNET_PREFIX = "diffusion_model."
-
-# Known prefixes in reference model files that should be stripped to get the base module name
-REFERENCE_MODEL_PREFIXES_TO_STRIP = [
-    "model.diffusion_model.",
-    "diffusion_model.",
-    "model.",
-    "text_model.encoder.",
-    "text_model.",
-    "net.",  # Anima-preview
-    "",  # fallback: no prefix
-]
 
 
 def split_scale(alpha: int, rank: int) -> tuple[float, float]:
